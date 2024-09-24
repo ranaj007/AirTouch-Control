@@ -1,7 +1,7 @@
 import numpy as np
 import urllib3
 import json
-
+import time
 
 def upload_data(data: dict, url: str) -> int:
     """Uploads data to VictoriaMetrics and calculates the number of bytes.
@@ -9,10 +9,22 @@ def upload_data(data: dict, url: str) -> int:
 
     http = urllib3.PoolManager()
 
+    data['version'] = "v1.0.0"
+
     data = json.dumps(data, cls=NpEncoder)
 
-    http.request('POST', url, body=data)
-    return len(data)
+    err_cntr = 0
+    while err_cntr < 5:
+        try:
+            http.request('POST', url, body=data)
+            return len(data)
+        except Exception:
+            err_cntr += 1
+            print(f"Failed to upload data to {url}")
+            print("Retrying in 5 seconds...")
+            time.sleep(5)
+    print(f"Failed all attempts to send data to {url}")
+    return False
 
 
 class NpEncoder(json.JSONEncoder):
@@ -24,3 +36,4 @@ class NpEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super(NpEncoder, self).default(obj)
+    

@@ -1,15 +1,43 @@
 from airtouch_cmds import airtouch_connect
+from VictoriaMetrics import upload_data
 import asyncio
 import time
 
 async def main() -> None:
     try:
+        url = "http://192.168.1.100:8428/api/v1/import"
         async def _on_ac_status_updated(ac_id: int) -> None:
             print(time.ctime())
             aircon = airtouch.air_conditioners[ac_id]
             print(f"temp={aircon.current_temperature:.1f} set_point={aircon.target_temperature:.1f}")
             print(f"AC Status  : {aircon.power_state.name} {aircon.mode.name}")
             print()
+
+            unix_time_ms = int(time.time() * 1000)
+
+            data = {
+                "metric": {
+                    "__name__": "power",
+                    "sender": "AirConditioner",
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [int(aircon.power_state.name=="ON")],
+                "timestamps": [unix_time_ms],
+                }
+
+            upload_data(data, url)
+
+            data = {
+                "metric": {
+                    "__name__": "temperature",
+                    "sender": "AirConditioner",
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [aircon.current_temperature],
+                "timestamps": [unix_time_ms],
+                }
+
+            upload_data(data, url)
                 
         async def _on_zone_status_updated(zone_id: int) -> None:
             aircon = airtouch.air_conditioners[0]
@@ -27,12 +55,37 @@ async def main() -> None:
             print(f"damper={zone.current_damper_percentage}")
             print()
 
-        delay_s = 10
+            unix_time_ms = int(time.time() * 1000)
+            data = {
+                "metric": {
+                    "__name__": "temperature",
+                    "sender": zone.name,
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [zone.current_temperature],
+                "timestamps": [unix_time_ms],
+                }
+
+            upload_data(data, url)
+
+            data = {
+                "metric": {
+                    "__name__": "damper",
+                    "sender": zone.name,
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [zone.current_damper_percentage],
+                "timestamps": [unix_time_ms],
+                }
+
+            upload_data(data, url)
+
+        delay_s = 60
         zones = {}
         airtouch = await airtouch_connect()
         for aircon in airtouch.air_conditioners:
             print(f"AC {aircon.ac_id} is {aircon.power_state}")
-            #aircon.subscribe(_on_ac_status_updated)
+            aircon.subscribe(_on_ac_status_updated)
             print(f"Found {len(aircon.zones)} zones")
             for zone in aircon.zones:
                 if zone.has_temp_sensor:
@@ -52,7 +105,6 @@ async def main() -> None:
                 await zone.set_damper_percentage(11)
                 await asyncio.sleep(1)
                 await zone.set_damper_percentage(old_damper)
-                await asyncio.sleep(10)
                 print()
             
             #await airtouch.shutdown()
