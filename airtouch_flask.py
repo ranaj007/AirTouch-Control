@@ -1,6 +1,11 @@
 from pyairtouch import AirTouchModel, connect, api
+from airtouch_cmds import airtouch_connect
 from flask import Flask, jsonify, request
+from multiprocessing import Process
+import airtouch_monitor
+import airtouch_cmds
 import asyncio
+import time
 
 app = Flask(__name__)
 
@@ -24,11 +29,7 @@ def control_airtouch_route():
 
 async def control_airtouch(zone_name, temperature):
     # Connect to AirTouch
-    airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
-    success = await airtouch.init()
-
-    if not success:
-        return jsonify({"error": "Failed to connect to AirTouch"}), 500
+    airtouch = await airtouch_connect()
     
     found_zone = False
 
@@ -53,6 +54,11 @@ async def control_airtouch(zone_name, temperature):
         return jsonify({"error": f"Zone {zone_name} not found"}), 404
     return jsonify({"message": f"Set {zone_name} damper to {new_damper}"}), 200
 
+def start_background_monitor():
+    asyncio.run(airtouch_monitor.main())
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    p = Process(target=start_background_monitor)
+    p.start()
+    app.run(debug=False, host="0.0.0.0")
+    p.join()
