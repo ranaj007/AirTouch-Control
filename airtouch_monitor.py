@@ -43,7 +43,7 @@ async def main() -> None:
             aircon = airtouch.air_conditioners[0]
             zone = aircon.zones[zone_id]
 
-            if zone.current_damper_percentage != 11:
+            if zone.current_damper_percentage == 11:
                 return
 
             print(f"{time.ctime()} : {zone.name}")
