@@ -43,8 +43,11 @@ async def main() -> None:
             aircon = airtouch.air_conditioners[0]
             zone = aircon.zones[zone_id]
 
-            if zone.current_damper_percentage == 11:
+            if zone.current_damper_percentage == 11 or zone.target_temperature == 32:
                 return
+            
+            zones[zone.name][1] = zone.current_damper_percentage
+            zones[zone.name][2] = zone.target_temperature
 
             print(f"{time.ctime()} : {zone.name}")
             print(f"Zone Status: {zone.name} {zone.power_state.name}")
@@ -53,6 +56,10 @@ async def main() -> None:
             else:
                 print("No temperature sensor")
             print(f"damper={zone.current_damper_percentage}")
+            print('-----------------')
+            print(zone.control_method.name)
+            print(zone.control_method.value)
+            print('-----------------')
             print()
 
             unix_time_ms = int(time.time() * 1000)
@@ -91,7 +98,7 @@ async def main() -> None:
                 if zone.has_temp_sensor:
                     print(f"Subscribing to {zone.name}")
                     zone.subscribe(_on_zone_status_updated)
-                    zones[zone.name] = [zone, zone.current_damper_percentage]
+                    zones[zone.name] = [zone, zone.current_damper_percentage, zone.target_temperature, zone.control_method.name]
 
         # Shutdown the connection
         #await airtouch.shutdown()
@@ -100,13 +107,14 @@ async def main() -> None:
             for zone_name in zones:
                 zone = zones[zone_name][0]
                 print(f"Pinging {zone.name}...")
-                old_damper = zone.current_damper_percentage
-                zones[zone_name][1] = old_damper
-                if old_damper == 11:
-                    old_damper = 10
-                await zone.set_damper_percentage(11)
-                await asyncio.sleep(1)
-                await zone.set_damper_percentage(old_damper)
+                if zones[zone_name][3] == "DAMPER":
+                    await zone.set_damper_percentage(11)
+                    await asyncio.sleep(1)
+                    await zone.set_damper_percentage(zones[zone_name][1])
+                else:
+                    await zone.set_target_temperature(32)
+                    await asyncio.sleep(1)
+                    await zone.set_target_temperature(zones[zone_name][2])
                 print()
             
             #await airtouch.shutdown()
@@ -115,7 +123,9 @@ async def main() -> None:
         print("Shutting down...")
         for zone_name in zones:
             zone = zones[zone_name][0]
-            old_damper = zones[zone_name][1]
-            await zone.set_damper_percentage(old_damper)
+            if zones[zone_name][3] == "DAMPER":
+                await zone.set_damper_percentage(zones[zone_name][1])
+            else:
+                await zone.set_target_temperature(zones[zone_name][2])
 
         await airtouch.shutdown()
