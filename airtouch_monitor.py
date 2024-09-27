@@ -7,11 +7,11 @@ async def main() -> None:
     try:
         url = "http://192.168.1.100:8428/api/v1/import"
         async def _on_ac_status_updated(ac_id: int) -> None:
-            print(time.ctime())
+            #print(time.ctime())
             aircon = airtouch.air_conditioners[ac_id]
-            print(f"temp={aircon.current_temperature:.1f} set_point={aircon.target_temperature:.1f}")
-            print(f"AC Status  : {aircon.power_state.name} {aircon.mode.name}")
-            print()
+            #print(f"temp={aircon.current_temperature:.1f} set_point={aircon.target_temperature:.1f}")
+            #print(f"AC Status  : {aircon.power_state.name} {aircon.mode.name}")
+            #print()
 
             unix_time_ms = int(time.time() * 1000)
 
@@ -102,6 +102,8 @@ async def main() -> None:
                 print(f"Pinging {zone.name}...")
                 old_damper = zone.current_damper_percentage
                 zones[zone_name][1] = old_damper
+                if old_damper == 11:
+                    old_damper = 10
                 await zone.set_damper_percentage(11)
                 await asyncio.sleep(1)
                 await zone.set_damper_percentage(old_damper)
