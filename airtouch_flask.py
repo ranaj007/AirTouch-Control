@@ -26,6 +26,23 @@ def control_airtouch_route():
     result = asyncio.run(control_airtouch(zone_name, temperature))
     return result
 
+@app.route("/set_vent", methods=["GET"])
+def set_vent():
+    zone_name = request.args.get('zone_name')
+    damper_percentage = int(request.args.get('vent'))
+    return asyncio.run(set_damper(zone_name, damper_percentage))
+
+async def set_damper(zone_name, damper):
+    airtouch = await airtouch_connect()
+
+    for aircon in airtouch.air_conditioners:
+        print(f"AC {aircon.ac_id} is {aircon.power_state}")
+
+        for zone in aircon.zones:
+            if zone.name == zone_name:
+                await zone.set_damper_percentage(damper)
+                return jsonify({"message": f"Set {zone_name} damper to {damper}"}), 200
+    return jsonify({"error": f"Zone {zone_name} not found"}), 404
 
 async def control_airtouch(zone_name, temperature):
     # Connect to AirTouch
