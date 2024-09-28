@@ -111,7 +111,7 @@ async def main() -> None:
 
                 upload_data(data, url)
 
-        delay_s = 5
+        delay_s = 60
         zones = {}
         airtouch = await airtouch_connect()
         for aircon in airtouch.air_conditioners:
