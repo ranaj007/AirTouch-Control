@@ -43,18 +43,16 @@ async def main() -> None:
             aircon = airtouch.air_conditioners[0]
             zone = aircon.zones[zone_id]
 
-            if zone.current_damper_percentage == 11 or zone.target_temperature == 32:
+            if zone.current_damper_percentage == 11 or zone.target_temperature == 17:
                 return
             
             zones[zone.name][1] = zone.current_damper_percentage
             zones[zone.name][2] = zone.target_temperature
+            zones[zone.name][3] = zone.control_method.name
 
             print(f"{time.ctime()} : {zone.name}")
             print(f"Zone Status: {zone.name} {zone.power_state.name}")
-            if zone.has_temp_sensor:
-                print(f"temp={zone.current_temperature} set_point={zone.target_temperature}")
-            else:
-                print("No temperature sensor")
+            print(f"temp={zone.current_temperature} set_point={zone.target_temperature}")
             print(f"damper={zone.current_damper_percentage}")
             print('-----------------')
             print(zone.control_method.name)
@@ -63,6 +61,19 @@ async def main() -> None:
             print()
 
             unix_time_ms = int(time.time() * 1000)
+
+            data = {
+                "metric": {
+                    "__name__": "power",
+                    "sender": zone.name,
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [int(zone.power_state.name=="ON")],
+                "timestamps": [unix_time_ms],
+                }
+
+            upload_data(data, url)
+
             data = {
                 "metric": {
                     "__name__": "temperature",
@@ -87,7 +98,20 @@ async def main() -> None:
 
             upload_data(data, url)
 
-        delay_s = 60
+            if zone.control_method.name == "TEMPERATURE":
+                data = {
+                "metric": {
+                    "__name__": "target_temperature",
+                    "sender": zone.name,
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [zone.target_temperature],
+                "timestamps": [unix_time_ms],
+                }
+
+                upload_data(data, url)
+
+        delay_s = 5
         zones = {}
         airtouch = await airtouch_connect()
         for aircon in airtouch.air_conditioners:
@@ -112,9 +136,10 @@ async def main() -> None:
                     await asyncio.sleep(1)
                     await zone.set_damper_percentage(zones[zone_name][1])
                 else:
-                    await zone.set_target_temperature(32)
+                    await zone.set_target_temperature(17)
                     await asyncio.sleep(1)
                     await zone.set_target_temperature(zones[zone_name][2])
+                await asyncio.sleep(1)
                 print()
             
             #await airtouch.shutdown()
