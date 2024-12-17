@@ -1,11 +1,9 @@
-from pyairtouch import AirTouchModel, connect, api
 from airtouch_cmds import airtouch_connect
 from flask import Flask, jsonify, request
 from multiprocessing import Process
 import airtouch_monitor
-import airtouch_cmds
 import asyncio
-import time
+
 
 app = Flask(__name__)
 
