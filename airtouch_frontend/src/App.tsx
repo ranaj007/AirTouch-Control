@@ -17,7 +17,7 @@ function App() {
     });
   };
 
-  const presets = [0, 10, 25, 75, 100];
+  const presets = [0, 10, 25, 100];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,17 +41,27 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <h1>Welcome to React-Bootstrap</h1>
-      <Container>
+    <div className="mx-2">
+      <h1>AirTouch Controller</h1>
         {loading && <p>Loading...</p>}
+        <Row>
+          <Col>
+          <Row>
+            <Col xs="2"><h4>Zone</h4></Col>
+            <Col xs="1"><h4>Temp</h4></Col>
+            <Col xs="1"><h4>Vent</h4></Col>
+            <Col md={{offset: 1}}><h4>Set</h4></Col>
+            <Col className='ms-5'><h4>Presets</h4></Col>
+          </Row>
+          </Col>
+        </Row>
         <Row>
 
           {data && (
             <Col>
               {data.map((zone: any) => (
                 <Row key={zone} className="mb-2">
-                  <Col>{zone}</Col>
+                  <Col xs="2">{zone}</Col>
                   <Col xs="1">{zoneTemps[zone] && <div>{zoneTemps[zone]}°C</div>}</Col>
                   <Col xs="auto">{zonePercentages[zone]}%</Col>
                   <Col>
@@ -64,7 +74,7 @@ function App() {
                     />
                   </Col>
                   {presets.map((preset) => (
-                    <Col key={`${zone}-${preset}`} xs="auto">
+                    <Col className="px-1" key={`${zone}-${preset}`} xs="auto">
                       <Button key={preset} onClick={() => setZonePercent(zone, preset)}>{preset}</Button>
                     </Col>
                   ))}
@@ -73,7 +83,6 @@ function App() {
             </Col>
           )}
         </Row>
-      </Container>
     </div>
   )
 }
