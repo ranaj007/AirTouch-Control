@@ -1,11 +1,20 @@
-from airtouch_cmds import airtouch_connect
 from flask import Flask, jsonify, request
 from multiprocessing import Process
 import airtouch_monitor
+import airtouch_cmds
 import asyncio
 
 
 app = Flask(__name__)
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+
+@app.route("/api/get_zones", methods=["GET"])
+def get_zones():
+    result = asyncio.run(airtouch_cmds.get_zones())
+    return result
 
 @app.route("/control_airtouch", methods=["GET"])
 def control_airtouch_route():
@@ -21,53 +30,14 @@ def control_airtouch_route():
     if not temperature:
         return jsonify({"error": "Temperature is required"}), 400
     
-    result = asyncio.run(control_airtouch(zone_name, temperature))
+    result = asyncio.run(airtouch_cmds.control_airtouch(zone_name, temperature))
     return result
 
 @app.route("/set_vent", methods=["GET"])
 def set_vent():
     zone_name = request.args.get('zone_name')
     damper_percentage = int(request.args.get('vent'))
-    return asyncio.run(set_damper(zone_name, damper_percentage))
-
-async def set_damper(zone_name, damper):
-    airtouch = await airtouch_connect()
-
-    for aircon in airtouch.air_conditioners:
-        print(f"AC {aircon.ac_id} is {aircon.power_state}")
-
-        for zone in aircon.zones:
-            if zone.name == zone_name:
-                await zone.set_damper_percentage(damper)
-                return jsonify({"message": f"Set {zone_name} damper to {damper}"}), 200
-    return jsonify({"error": f"Zone {zone_name} not found"}), 404
-
-async def control_airtouch(zone_name, temperature):
-    # Connect to AirTouch
-    airtouch = await airtouch_connect()
-    
-    found_zone = False
-
-    # Subscribe to AC status updates:
-    for aircon in airtouch.air_conditioners:
-        print(f"AC {aircon.ac_id} is {aircon.power_state}")
-
-        for zone in aircon.zones:
-            if zone.name == zone_name:
-                #zone.subscribe(_on_zone_status_updated)
-                found_zone = True
-                new_damper = 50 if temperature < 25 else 10
-                print(f"Setting {zone_name} damper to {new_damper}")
-                await zone.set_damper_percentage(new_damper)
-
-    if not found_zone:
-        print(f"Zone {zone_name} not found in the following list:")
-        for aircon in airtouch.air_conditioners:
-            for zone in aircon.zones:
-                print(zone.name)
-
-        return jsonify({"error": f"Zone {zone_name} not found"}), 404
-    return jsonify({"message": f"Set {zone_name} damper to {new_damper}"}), 200
+    return asyncio.run(airtouch_cmds.set_damper(zone_name, damper_percentage))
 
 def start_background_monitor():
     asyncio.run(airtouch_monitor.main())
@@ -75,5 +45,5 @@ def start_background_monitor():
 if __name__ == "__main__":
     p = Process(target=start_background_monitor)
     p.start()
-    app.run(debug=False, host="0.0.0.0")
+    app.run(debug=True, host="0.0.0.0", port=5001)
     p.join()
