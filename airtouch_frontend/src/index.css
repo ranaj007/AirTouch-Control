@@ -1,0 +1,10 @@
+input[type="range"]::-webkit-slider-thumb {
+    width: 25px;
+    height: 25px;
+    margin-top: -8.5px;
+}
+  
+.custom-range[type="range"]::-webkit-slider-thumb {
+    background: var(--thumb-color, #0d6efd);
+    pointer-events: none;
+}
