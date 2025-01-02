@@ -1,15 +1,14 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from multiprocessing import Process
 import airtouch_monitor
 import airtouch_cmds
 import asyncio
 
-
-app = Flask(__name__)
+app = Flask(__name__, template_folder="airtouch_frontend/dist", static_folder="airtouch_frontend/dist/assets")
 
 @app.route("/")
-def hello():
-    return "Hello World!"
+def home():
+    return render_template("index.html")
 
 @app.route("/api/get_zones", methods=["GET"])
 def get_zones():
