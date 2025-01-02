@@ -38,6 +38,18 @@ async def main() -> None:
                 }
 
             upload_data(data, url)
+
+            data = {
+                "metric": {
+                    "__name__": "target_temperature",
+                    "sender": "AirConditioner",
+                    "application": "Airtouch_Custom_Sendor",
+                },
+                "values": [aircon.target_temperature],
+                "timestamps": [unix_time_ms],
+                }
+            
+            upload_data(data, url)
                 
         async def _on_zone_status_updated(zone_id: int) -> None:
             aircon = airtouch.air_conditioners[0]
