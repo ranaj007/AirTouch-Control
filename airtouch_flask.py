@@ -12,8 +12,11 @@ def home():
 
 @app.route("/api/get_zones", methods=["GET"])
 def get_zones():
-    result = asyncio.run(airtouch_cmds.get_zones())
-    return result
+    zone_percents = {'Zone 1': 11}
+    while 11 in zone_percents.values():
+        zones = asyncio.run(airtouch_cmds.get_zones())
+        zone_percents = zones["zone_percents"]
+    return jsonify(zones), 200
 
 @app.route("/api/set_zones", methods=["POST"])
 def set_zones():
@@ -52,5 +55,5 @@ def start_background_monitor():
 if __name__ == "__main__":
     p = Process(target=start_background_monitor)
     p.start()
-    app.run()
+    app.run(host="0.0.0.0")
     p.join()

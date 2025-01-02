@@ -22,7 +22,7 @@ async def get_zones():
             if zone.has_temp_sensor:
                 zone_temps[zone.name] = zone.current_temperature
 
-    return jsonify({"zones": list(zone_percents.keys()), "zone_states": zone_states, "zone_percents": zone_percents, "zone_temps": zone_temps}), 200
+    return {"zones": list(zone_percents.keys()), "zone_states": zone_states, "zone_percents": zone_percents, "zone_temps": zone_temps}
 
 
 async def set_zones(zone_states, zone_percents):
