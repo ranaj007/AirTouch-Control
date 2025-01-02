@@ -53,5 +53,5 @@ def start_background_monitor():
 if __name__ == "__main__":
     p = Process(target=start_background_monitor)
     p.start()
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    app.run()
     p.join()
