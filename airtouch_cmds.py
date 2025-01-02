@@ -1,4 +1,4 @@
-from pyairtouch import AirTouchModel, connect, AirTouch
+from pyairtouch import AirTouchModel, connect, AirTouch, api
 from flask import jsonify
 
 async def airtouch_connect() -> AirTouch:
@@ -8,18 +8,35 @@ async def airtouch_connect() -> AirTouch:
     print("Failed to connect to AirTouch")
     return None
 
+
 async def get_zones():
     airtouch = await airtouch_connect()
-    zones = {}
+    zone_states = {}
+    zone_percents = {}
     zone_temps = {}
 
     for aircon in airtouch.air_conditioners:
         for zone in aircon.zones:
-            zones[zone.name] = zone.current_damper_percentage
+            zone_states[zone.name] = zone.power_state.name
+            zone_percents[zone.name] = zone.current_damper_percentage
             if zone.has_temp_sensor:
                 zone_temps[zone.name] = zone.current_temperature
 
-    return jsonify({"zones": list(zones.keys()), "zone_percents": zones, "zone_temps": zone_temps}), 200
+    return jsonify({"zones": list(zone_percents.keys()), "zone_states": zone_states, "zone_percents": zone_percents, "zone_temps": zone_temps}), 200
+
+
+async def set_zones(zone_states, zone_percents):
+    airtouch = await airtouch_connect()
+
+    for aircon in airtouch.air_conditioners:
+
+        for zone in aircon.zones:
+            if zone.name in zone_states:
+                await zone.set_power(api.ZonePowerState[zone_states[zone.name]])
+                await zone.set_damper_percentage(zone_percents[zone.name])
+
+    return jsonify({"message": "Set zones"}), 200
+
 
 async def set_damper(zone_name, damper):
     airtouch = await airtouch_connect()
@@ -32,6 +49,7 @@ async def set_damper(zone_name, damper):
                 await zone.set_damper_percentage(damper)
                 return jsonify({"message": f"Set {zone_name} damper to {damper}"}), 200
     return jsonify({"error": f"Zone {zone_name} not found"}), 404
+
 
 async def control_airtouch(zone_name, temperature):
     # Connect to AirTouch

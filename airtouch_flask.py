@@ -16,6 +16,14 @@ def get_zones():
     result = asyncio.run(airtouch_cmds.get_zones())
     return result
 
+@app.route("/api/set_zones", methods=["POST"])
+def set_zones():
+    zones = request.json
+    zone_states = zones["zone_states"]
+    zone_percents = zones["zone_percents"]
+    result = asyncio.run(airtouch_cmds.set_zones(zone_states, zone_percents))
+    return result
+
 @app.route("/control_airtouch", methods=["GET"])
 def control_airtouch_route():
     zone_name = request.args.get('zone_name')
