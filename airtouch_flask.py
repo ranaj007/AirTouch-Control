@@ -3,6 +3,7 @@ from multiprocessing import Process
 import airtouch_monitor
 import airtouch_cmds
 import asyncio
+import os
 
 app = Flask(__name__, template_folder="airtouch_frontend/dist", static_folder="airtouch_frontend/dist/assets")
 
@@ -55,5 +56,6 @@ def start_background_monitor():
 if __name__ == "__main__":
     p = Process(target=start_background_monitor)
     p.start()
-    app.run(host="0.0.0.0")
+    port = os.getenv("FLASK_PORT", 5000)
+    app.run(host="0.0.0.0", port=port)
     p.join()

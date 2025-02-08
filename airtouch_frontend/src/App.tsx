@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Container, Button, Row, Col, Form } from 'react-bootstrap'
+import LabelRow from './LabelRow';
+import RangeRow from './RangeRow';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   const [data, setData] = useState(['test', 'test2']);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [zoneStates, setZoneStates] = useState({});
-  const [zonePercentages, setZonePercentages] = useState({});
-  const [zoneTemps, setZoneTemps] = useState({});
+  const [acPower, setAcPower] = useState(false);
+  const [acTemp, setAcTemp] = useState(20);
+  const [zoneStates, setZoneStates] = useState<{ [key: string]: 'ON' | 'OFF' }>({});
+  const [zonePercentages, setZonePercentages] = useState<{ [key: string]: number }>({});
+  const [zoneTemps, setZoneTemps] = useState<{ [key: string]: number }>({});
   const [ventTotal, setVentTotal] = useState(0);
   const [buttonText, setButtonText] = useState('Set Vents');
 
@@ -30,7 +35,7 @@ function App() {
       setZoneStates(result['zone_states']);
       setZonePercentages(result['zone_percents']);
       setZoneTemps(result['zone_temps']);
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message);
     } finally {
       setLoading(false);
@@ -45,12 +50,12 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({'zone_states': zoneStates, 'zone_percents': zonePercentages}),
+        body: JSON.stringify({ 'zone_states': zoneStates, 'zone_percents': zonePercentages }),
       });
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message);
     }
     setButtonText('Set Vents');
@@ -93,24 +98,45 @@ function App() {
     <Container className="mx-0">
       <h1>AirTouch Controller</h1>
       {loading && <p>Loading...</p>}
-      <Row>
-        <Col xs="2"><h4>Zone</h4></Col>
-        <Col xs="2"></Col>
-        <Col xs="2"></Col>
-        <Col className="text-center"><h4>Vent</h4></Col>
+      <LabelRow
+        leftLabel='Power'
+        rightLabel='Temp'
+      />
+
+      <Row className="mb-2 align-items-center">
+        <RangeRow
+          labelText='AC'
+          value={acTemp}
+          unit="°C"
+          showButton={true}
+        />
+        <Col className="ps-3">
+          <Form.Range
+            value={acTemp}
+            min={16}
+            max={32}
+            onChange={(e) => setAcTemp(parseInt(e.target.value))}
+          />
+        </Col>
         <Col xs="1"></Col>
       </Row>
+
+      <LabelRow
+        leftLabel='Zone'
+        rightLabel='Vent'
+      />
+
       <Row>
-      <Col xs="1"></Col>
-        <Col xs="2">Total</Col>
-        <Col xs="2"></Col>
-        <Col xs="1" className="p-1">{ventTotal}%</Col>
+        <RangeRow
+          labelText='Total'
+          value={ventTotal}
+        />
         <Col className="ps-3">
           <Form.Range
             className='custom-range'
             style={{
               '--thumb-color': thumbColor,
-            }}
+            } as React.CSSProperties}
             value={ventTotal}
             min={0}
             max={100}
@@ -119,22 +145,21 @@ function App() {
         </Col>
         <Col xs="1"></Col>
       </Row>
+
       <Row>
         {data && (
           <Col>
             {data.map((zone: any) => (
               <Row key={zone} className="mb-2 align-items-center">
-                <Col xs="1" className="d-flex justify-content-center">
-                  <Button size='sm'
-                    variant={stateColors[zoneStates[zone]]}
-                    onClick={() => setZoneState(zone)}
-                  >
-                    {zoneStates[zone] === 'ON' ? '⦿' : '⦾'}
-                  </Button>
-                </Col>
-                <Col xs="2">{zone}</Col>
-                <Col xs="2">{zoneTemps[zone] && <div>{zoneTemps[zone]}°C</div>}</Col>
-                <Col xs="1" className="px-2">{zoneStates[zone] === 'ON' ? zonePercentages[zone] : '0'}%</Col>
+                <RangeRow
+                  labelText={zone}
+                  value={zoneStates[zone] === 'ON' ? zonePercentages[zone] : 0}
+                  tempSensor={zoneTemps[zone]}
+                  showButton={true}
+                  variant={stateColors[zoneStates[zone]]}
+                  onClick={() => setZoneState(zone)}
+                  buttonState={zoneStates[zone] === 'ON'}
+                />
                 <Col className="ps-3">
                   <Form.Range
                     value={zonePercentages[zone]}
@@ -151,6 +176,7 @@ function App() {
           </Col>
         )}
       </Row>
+
       <Row className="justify-content-center">
         <Col xs="auto">
           <Button
