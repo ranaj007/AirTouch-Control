@@ -11,7 +11,7 @@ function App() {
   const [error, setError] = useState(null);
   const [acPower, setAcPower] = useState(false);
   const [acTemp, setAcTemp] = useState(20);
-  const [zoneStates, setZoneStates] = useState<{ [key: string]: 'ON' | 'OFF' }>({});
+  const [zoneStates, setZoneStates] = useState<{ [key: string]: boolean }>({});
   const [zonePercentages, setZonePercentages] = useState<{ [key: string]: number }>({});
   const [zoneTemps, setZoneTemps] = useState<{ [key: string]: number }>({});
   const [ventTotal, setVentTotal] = useState(0);
@@ -19,9 +19,13 @@ function App() {
 
   const thumbColor = ventTotal >= 100 ? '#5fc998' : '#61a1fe';
 
-  const stateColors = {
-    'ON': 'primary',
-    'OFF': 'secondary',
+  const getStateColor = (zoneState: boolean) =>{
+    if (zoneState)
+    {
+      return 'primary';
+    } else {
+      return 'secondary';
+    }
   };
 
   const fetchData = async () => {
@@ -64,7 +68,7 @@ function App() {
   const setZoneState = (zone: string) => {
     setZoneStates({
       ...zoneStates,
-      [zone]: zoneStates[zone] === 'ON' ? 'OFF' : 'ON',
+      [zone]: !zoneStates[zone],
     });
   }
 
@@ -78,7 +82,7 @@ function App() {
   const calcVentTotal = () => {
     let total = 0;
     for (const zone in zonePercentages) {
-      if (zoneStates[zone] === 'ON') {
+      if (zoneStates[zone]) {
         total += zonePercentages[zone];
       }
     }
@@ -109,6 +113,9 @@ function App() {
           value={acTemp}
           unit="°C"
           showButton={true}
+          variant={acPower ? 'primary' : 'secondary'}
+          onClick={() => setAcPower(!acPower)}
+          buttonState={acPower}
         />
         <Col className="ps-3">
           <Form.Range
@@ -116,6 +123,7 @@ function App() {
             min={16}
             max={32}
             onChange={(e) => setAcTemp(parseInt(e.target.value))}
+            disabled={!acPower}
           />
         </Col>
         <Col xs="1"></Col>
@@ -153,21 +161,21 @@ function App() {
               <Row key={zone} className="mb-2 align-items-center">
                 <RangeRow
                   labelText={zone}
-                  value={zoneStates[zone] === 'ON' ? zonePercentages[zone] : 0}
+                  value={zoneStates[zone] ? zonePercentages[zone] : 0}
                   tempSensor={zoneTemps[zone]}
                   showButton={true}
-                  variant={stateColors[zoneStates[zone]]}
+                  variant={getStateColor(zoneStates[zone])}
                   onClick={() => setZoneState(zone)}
-                  buttonState={zoneStates[zone] === 'ON'}
+                  buttonState={zoneStates[zone]}
                 />
                 <Col className="ps-3">
                   <Form.Range
-                    value={zonePercentages[zone]}
+                    value={zonePercentages[zone] ?? 0}
                     onChange={(e) => { setZonePercent(zone, parseInt(e.target.value)) }}
                     min={0}
                     max={100}
                     step={5}
-                    disabled={buttonText === 'waiting' || zoneStates[zone] === 'OFF'}
+                    disabled={buttonText === 'waiting' || !zoneStates[zone]}
                   />
                 </Col>
                 <Col xs="1"></Col>

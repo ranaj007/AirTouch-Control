@@ -26,4 +26,6 @@ COPY *.py .
 
 EXPOSE 5000
 
+ENV PYTHONUNBUFFERED=1
+
 CMD ["python", "airtouch_flask.py"]

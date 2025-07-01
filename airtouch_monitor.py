@@ -145,7 +145,7 @@ async def main() -> None:
                 print(f"Pinging {zone.name}...")
                 if zones[zone_name][3] == "DAMPER":
                     await zone.set_damper_percentage(11)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
                     await zone.set_damper_percentage(zones[zone_name][1])
                 else:
                     await zone.set_target_temperature(17)

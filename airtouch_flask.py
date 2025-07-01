@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, render_template
-from multiprocessing import Process
 import airtouch_monitor
+import multiprocessing
 import airtouch_cmds
 import asyncio
 import os
@@ -16,6 +16,7 @@ def get_zones():
     zone_percents = {'Zone 1': 11}
     while 11 in zone_percents.values():
         zones = asyncio.run(airtouch_cmds.get_zones())
+        zones["zone_states"] = {zone: zones["zone_states"][zone] == "ON" for zone in zones["zone_states"]}
         zone_percents = zones["zone_percents"]
     return jsonify(zones), 200
 
@@ -23,6 +24,7 @@ def get_zones():
 def set_zones():
     zones = request.json
     zone_states = zones["zone_states"]
+    zone_states = {zone: "ON" if zone_states[zone] else "OFF" for zone in zone_states}
     zone_percents = zones["zone_percents"]
     result = asyncio.run(airtouch_cmds.set_zones(zone_states, zone_percents))
     return result
@@ -51,11 +53,15 @@ def set_vent():
     return asyncio.run(airtouch_cmds.set_damper(zone_name, damper_percentage))
 
 def start_background_monitor():
+    print("Starting Airtouch background monitor...")
     asyncio.run(airtouch_monitor.main())
 
 if __name__ == "__main__":
-    p = Process(target=start_background_monitor)
+    multiprocessing.set_start_method('spawn', True)
+    print("Starting Flask server...")
+    p = multiprocessing.Process(target=start_background_monitor)
     p.start()
+    print("Background monitor started.")
     port = os.getenv("FLASK_PORT", 5000)
     app.run(host="0.0.0.0", port=port)
     p.join()
