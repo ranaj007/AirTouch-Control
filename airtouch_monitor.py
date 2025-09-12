@@ -55,7 +55,7 @@ async def main() -> None:
             aircon = airtouch.air_conditioners[0]
             zone = aircon.zones[zone_id]
 
-            if zone.current_damper_percentage == 11 or zone.target_temperature == 17:
+            if zone.current_damper_percentage % 5 != 0 or zone.target_temperature == 17:
                 return
             
             zones[zone.name][1] = zone.current_damper_percentage
@@ -123,7 +123,7 @@ async def main() -> None:
 
                 upload_data(data, url)
 
-        delay_s = 60
+        delay_s = 60*5 # 5 minutes
         zones = {}
         airtouch = await airtouch_connect()
         for aircon in airtouch.air_conditioners:
@@ -144,8 +144,8 @@ async def main() -> None:
                 zone = zones[zone_name][0]
                 print(f"Pinging {zone.name}...")
                 if zones[zone_name][3] == "DAMPER":
-                    await zone.set_damper_percentage(11)
-                    await asyncio.sleep(10)
+                    await zone.set_damper_percentage(99)
+                    await asyncio.sleep(5)
                     await zone.set_damper_percentage(zones[zone_name][1])
                 else:
                     await zone.set_target_temperature(17)
