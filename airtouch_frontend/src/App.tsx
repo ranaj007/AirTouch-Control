@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Container, Button, Row, Col, Form } from 'react-bootstrap'
 import LabelRow from './LabelRow';
 import RangeRow from './RangeRow';
+import VentRangeRow from './VentRangeRow';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -14,14 +15,14 @@ function App() {
   const [zoneStates, setZoneStates] = useState<{ [key: string]: boolean }>({});
   const [zonePercentages, setZonePercentages] = useState<{ [key: string]: number }>({});
   const [zoneTemps, setZoneTemps] = useState<{ [key: string]: number }>({});
+  const [zoneTempMode, setZoneTempMode] = useState<{ [key: string]: boolean }>({ 'Master': true, 'Bed2': true, 'Bed3': true });
   const [ventTotal, setVentTotal] = useState(0);
   const [buttonText, setButtonText] = useState('Set Vents');
 
   const thumbColor = ventTotal >= 100 ? '#5fc998' : '#61a1fe';
 
-  const getStateColor = (zoneState: boolean) =>{
-    if (zoneState)
-    {
+  const getStateColor = (zoneState: boolean) => {
+    if (zoneState) {
       return 'primary';
     } else {
       return 'secondary';
@@ -39,6 +40,7 @@ function App() {
       setZoneStates(result['zone_states']);
       setZonePercentages(result['zone_percents']);
       setZoneTemps(result['zone_temps']);
+      //setZoneTempMode(result['zone_temp_mode']);
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -139,6 +141,7 @@ function App() {
           labelText='Total'
           value={ventTotal}
         />
+
         <Col className="ps-3">
           <Form.Range
             className='custom-range'
@@ -159,26 +162,36 @@ function App() {
           <Col>
             {data.map((zone: any) => (
               <Row key={zone} className="mb-2 align-items-center">
-                <RangeRow
-                  labelText={zone}
-                  value={zoneStates[zone] ? zonePercentages[zone] : 0}
-                  tempSensor={zoneTemps[zone]}
-                  showButton={true}
-                  variant={getStateColor(zoneStates[zone])}
-                  onClick={() => setZoneState(zone)}
-                  buttonState={zoneStates[zone]}
-                />
-                <Col className="ps-3">
-                  <Form.Range
-                    value={zonePercentages[zone] ?? 0}
-                    onChange={(e) => { setZonePercent(zone, parseInt(e.target.value)) }}
-                    min={0}
-                    max={100}
-                    step={5}
-                    disabled={buttonText === 'waiting' || !zoneStates[zone]}
+                {!Object.keys(zoneTempMode).includes(zone) &&
+                  <VentRangeRow
+                    zone={zone}
+                    zoneStates={zoneStates}
+                    zoneValues={zonePercentages}
+                    zoneTemps={zoneTemps}
+                    zoneTempMode={zoneTempMode}
+                    buttonText={buttonText}
+                    setZoneState={setZoneState}
+                    setZoneValue={setZonePercent}
+                    getStateColor={getStateColor}
                   />
-                </Col>
-                <Col xs="1"></Col>
+                }
+
+                {Object.keys(zoneTempMode).includes(zone) &&
+                  <VentRangeRow
+                    zone={zone}
+                    zoneStates={zoneStates}
+                    zoneValues={zonePercentages}
+                    zoneTemps={zoneTemps}
+                    zoneTempMode={zoneTempMode}
+                    buttonText={buttonText}
+                    setZoneState={setZoneState}
+                    setZoneValue={setZonePercent}
+                    getStateColor={getStateColor}
+                    min={16}
+                    max={32}
+                    step={0.5}
+                  />
+                }
               </Row>
             ))}
           </Col>

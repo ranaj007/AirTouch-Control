@@ -1,7 +1,7 @@
 import { Col, Button } from 'react-bootstrap';
 
 interface RangeRowProps {
-    labelText: string;
+    labelText: string | JSX.Element;
     value: number;
     unit?: string;
     tempSensor?: number;
