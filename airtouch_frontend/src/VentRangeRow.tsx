@@ -6,7 +6,7 @@ interface VentRangeRowProps {
     zoneStates: { [key: string]: boolean };
     zoneValues: { [key: string]: number };
     zoneTemps: { [key: string]: number };
-    zoneTempMode: { [key: string]: boolean };
+    zoneTempModes: { [key: string]: number };
     buttonText: string;
     setZoneState: (zone: string) => void;
     setZoneValue: (zone: string, percent: number) => void;
@@ -16,24 +16,24 @@ interface VentRangeRowProps {
     step?: number;
 }
 
-function VentRangeRow({ zone, zoneStates, zoneValues, zoneTemps, zoneTempMode, buttonText, setZoneState, setZoneValue, getStateColor, min = 0, max = 100, step = 5 }: VentRangeRowProps) {
-    let displayValue;
-    if (Object.keys(zoneTempMode).includes(zone) && zoneTempMode[zone]) {
+function VentRangeRow({ zone, zoneStates, zoneValues, zoneTemps, zoneTempModes, buttonText, setZoneState, setZoneValue, getStateColor, min = 0, max = 100, step = 5 }: VentRangeRowProps) {
+    let displayValue = zoneStates[zone] ? zoneValues[zone] : 0; // only show vent percentage if vent is on
+    
+    if (Object.keys(zoneTempModes).includes(zone) && zoneTempModes[zone] >= 16) {
         displayValue = zoneValues[zone] ?? 0; // always show temperature
-    } else {
-        displayValue = zoneStates[zone] ? zoneValues[zone] : 0; // only show vent percentage if vent is on
     }
 
     return (
         <>
             <RangeRow
-                labelText={Object.keys(zoneTempMode).includes(zone) ? <Button size='sm'>{zone}</Button> : zone}
+                labelText={Object.keys(zoneTempModes).includes(zone) ? <Button size='sm'>{zone}</Button> : zone}
                 value={displayValue}
                 tempSensor={zoneTemps[zone]}
                 showButton={true}
                 variant={getStateColor(zoneStates[zone])}
                 onClick={() => setZoneState(zone)}
                 buttonState={zoneStates[zone]}
+                unit={zoneTempModes[zone] >= 16 ? "°C" : "%"}
             />
             <Col className="ps-3">
                 <Form.Range

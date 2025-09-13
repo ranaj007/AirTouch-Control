@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { Container, Button, Row, Col, Form } from 'react-bootstrap'
 import LabelRow from './LabelRow';
 import RangeRow from './RangeRow';
-import VentRangeRow from './VentRangeRow';
+import ComboRangeRow from './ComboRangeRow';
+import TempModeButton from './TempModeButton';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import TempRangeRow from './TempRangeRow';
 
 function App() {
   const [data, setData] = useState(['test', 'test2']);
@@ -15,7 +17,7 @@ function App() {
   const [zoneStates, setZoneStates] = useState<{ [key: string]: boolean }>({});
   const [zonePercentages, setZonePercentages] = useState<{ [key: string]: number }>({});
   const [zoneTemps, setZoneTemps] = useState<{ [key: string]: number }>({});
-  const [zoneTempMode, setZoneTempMode] = useState<{ [key: string]: boolean }>({ 'Master': true, 'Bed2': true, 'Bed3': true });
+  const [zoneTempModes, setZoneTempModes] = useState<{ [key: string]: number }>({ 'Master': 20, 'Bed2': 20, 'Bed3': 20 });
   const [ventTotal, setVentTotal] = useState(0);
   const [buttonText, setButtonText] = useState('Set Vents');
 
@@ -40,7 +42,7 @@ function App() {
       setZoneStates(result['zone_states']);
       setZonePercentages(result['zone_percents']);
       setZoneTemps(result['zone_temps']);
-      //setZoneTempMode(result['zone_temp_mode']);
+      //setZoneTempModes(result['zone_temp_modes']);
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -56,7 +58,12 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 'zone_states': zoneStates, 'zone_percents': zonePercentages }),
+        body: JSON.stringify(
+          {
+            'zone_states': zoneStates,
+            'zone_percents': zonePercentages,
+            'zone_temp_modes': zoneTempModes
+          }),
       });
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
@@ -78,6 +85,13 @@ function App() {
     setZonePercentages({
       ...zonePercentages,
       [zone]: percent,
+    });
+  };
+
+  const setZoneTempMode = (zone: string, temp: number) => {
+    setZoneTempModes({
+      ...zoneTempModes,
+      [zone]: temp,
     });
   };
 
@@ -162,36 +176,39 @@ function App() {
           <Col>
             {data.map((zone: any) => (
               <Row key={zone} className="mb-2 align-items-center">
-                {!Object.keys(zoneTempMode).includes(zone) &&
-                  <VentRangeRow
+                {true &&
+                  <ComboRangeRow
                     zone={zone}
+                    labelText=
+                    {
+                      Object.keys(zoneTempModes).includes(zone) ?
+                        <TempModeButton zone={zone} zoneTempModes={zoneTempModes} setZoneTempMode={setZoneTempMode} />
+                        : zone
+                    }
                     zoneStates={zoneStates}
-                    zoneValues={zonePercentages}
+                    zonePercentages={zonePercentages}
+                    zoneTempModes={zoneTempModes}
                     zoneTemps={zoneTemps}
-                    zoneTempMode={zoneTempMode}
                     buttonText={buttonText}
                     setZoneState={setZoneState}
-                    setZoneValue={setZonePercent}
+                    setZonePercent={setZonePercent}
+                    setZoneTempMode={setZoneTempMode}
                     getStateColor={getStateColor}
                   />
                 }
 
-                {Object.keys(zoneTempMode).includes(zone) &&
-                  <VentRangeRow
+                {/* {zoneTempModes[zone] >= 16 &&
+                  <TempRangeRow
                     zone={zone}
                     zoneStates={zoneStates}
-                    zoneValues={zonePercentages}
                     zoneTemps={zoneTemps}
-                    zoneTempMode={zoneTempMode}
+                    zoneTempModes={zoneTempModes}
                     buttonText={buttonText}
                     setZoneState={setZoneState}
-                    setZoneValue={setZonePercent}
+                    setZoneValue={setZoneTempMode}
                     getStateColor={getStateColor}
-                    min={16}
-                    max={32}
-                    step={0.5}
                   />
-                }
+                } */}
               </Row>
             ))}
           </Col>
