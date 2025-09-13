@@ -5,7 +5,7 @@ itsdangerous==2.2.0
 jinja2==3.1.4
 markupsafe==3.0.2
 numpy==2.2.0
-pyairtouch==2.1.0
+pyairtouch==3.1.0
 typing-extensions==4.12.2
 urllib3==2.2.3
 werkzeug==3.1.3
