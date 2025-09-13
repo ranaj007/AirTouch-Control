@@ -1,4 +1,4 @@
-import { Col, Form, Button } from 'react-bootstrap';
+import { Col, Form } from 'react-bootstrap';
 import RangeRow from './RangeRow';
 
 interface ComboRangeRowProps {
@@ -39,7 +39,7 @@ function ComboRangeRow({ zone, labelText = zone, zoneStates, zonePercentages, zo
             unit = "°C";
             min = 160;
             max = 320;
-            step = 1;
+            step = 10;
             slideFactor = 10;
         }
     }

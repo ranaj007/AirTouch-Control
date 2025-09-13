@@ -26,7 +26,7 @@ function RangeRow({ labelText, value, unit = '%', tempSensor = 0, showButton = f
                 )}
             </Col>
             <Col xs="2">{labelText}</Col>
-            <Col xs="2">{tempSensor>0 && <div>{tempSensor}°C</div>}</Col>
+            <Col xs="2">{tempSensor>0 && <div>{tempSensor.toFixed(1)}°C</div>}</Col>
             <Col xs="1" className="p-1">{value}{unit}</Col>
         </>
     );

@@ -41,7 +41,8 @@ function App() {
       setZoneStates(result['zone_states']);
       setZonePercentages(result['zone_percents']);
       setZoneTemps(result['zone_temps']);
-      //setZoneTempModes(result['zone_temp_modes']);
+      console.log(result['zone_temp_modes']);
+      setZoneTempModes(result['zone_temp_modes']);
     } catch (error: any) {
       setError(error.message);
     } finally {

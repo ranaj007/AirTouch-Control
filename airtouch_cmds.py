@@ -14,6 +14,7 @@ async def get_zones():
     zone_states = {}
     zone_percents = {}
     zone_temps = {}
+    zone_temp_modes = {}
 
     for aircon in airtouch.air_conditioners:
         for zone in aircon.zones:
@@ -21,11 +22,21 @@ async def get_zones():
             zone_percents[zone.name] = zone.current_damper_percentage
             if zone.has_temp_sensor:
                 zone_temps[zone.name] = zone.current_temperature
+                if zone.control_method.name == "TEMPERATURE":
+                    zone_temp_modes[zone.name] = zone.target_temperature
+                else:
+                    zone_temp_modes[zone.name] = zone.target_temperature * -1
 
-    return {"zones": list(zone_percents.keys()), "zone_states": zone_states, "zone_percents": zone_percents, "zone_temps": zone_temps}
+    return {
+        "zones": list(zone_percents.keys()),
+        "zone_states": zone_states,
+        "zone_percents": zone_percents,
+        "zone_temps": zone_temps,
+        "zone_temp_modes": zone_temp_modes,
+        }
 
 
-async def set_zones(zone_states, zone_percents):
+async def set_zones(zone_states, zone_percents, zone_temp_modes):
     airtouch = await airtouch_connect()
 
     for aircon in airtouch.air_conditioners:
@@ -33,6 +44,10 @@ async def set_zones(zone_states, zone_percents):
         for zone in aircon.zones:
             if zone.name in zone_states:
                 await zone.set_power(api.ZonePowerState[zone_states[zone.name]])
+
+            if zone.name in zone_temp_modes and zone_temp_modes[zone.name] >= 16:
+                await zone.set_target_temperature(zone_temp_modes[zone.name])
+            else:
                 await zone.set_damper_percentage(zone_percents[zone.name])
 
     return jsonify({"message": "Set zones"}), 200

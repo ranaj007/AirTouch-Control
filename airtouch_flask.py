@@ -26,7 +26,8 @@ def set_zones():
     zone_states = zones["zone_states"]
     zone_states = {zone: "ON" if zone_states[zone] else "OFF" for zone in zone_states}
     zone_percents = zones["zone_percents"]
-    result = asyncio.run(airtouch_cmds.set_zones(zone_states, zone_percents))
+    zone_temp_modes = zones["zone_temp_modes"]
+    result = asyncio.run(airtouch_cmds.set_zones(zone_states, zone_percents, zone_temp_modes))
     return result
 
 @app.route("/control_airtouch", methods=["GET"])
