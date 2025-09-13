@@ -10,7 +10,7 @@ function TempModeButton({ zone, zoneTempModes, setZoneTempMode }: TempModeButton
     return (
         <>
             <Button
-                variant={zoneTempModes[zone] < 16 ? 'primary' : 'danger'}
+                variant={zoneTempModes[zone] < 16 ? 'primary' : 'info'}
                 size='sm'
                 onClick={() => {
                     setZoneTempMode(zone, zoneTempModes[zone] * -1);

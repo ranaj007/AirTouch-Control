@@ -16,15 +16,20 @@ interface ComboRangeRowProps {
 }
 
 function ComboRangeRow({ zone, labelText = zone, zoneStates, zonePercentages, zoneTemps, zoneTempModes, buttonText, setZoneState, setZonePercent, setZoneTempMode, getStateColor }: ComboRangeRowProps) {
-    let displayValue = zoneStates[zone] ? zonePercentages[zone] : 0; // only show vent percentage if vent is on
+    //let displayValue = zoneStates[zone] ? zonePercentages[zone] : 0; // only show vent percentage if vent is on
+    let displayValue = zonePercentages[zone] ?? 0; // always show vent percentage
     let sliderValue = zonePercentages[zone] ?? 0;
     let unit = "%";
     let min = 0;
     let max = 100;
     let step = 5;
     let slideFactor = 1;
-
     let setZoneValue = setZonePercent;
+
+    
+    let disabled = buttonText === 'waiting' || !zoneStates[zone];
+    const thumbColor = disabled ? '#53575b' : '#0d6efd';
+
     
     if (Object.keys(zoneTempModes).includes(zone)) {
         if (zoneTempModes[zone] >= 16) {
@@ -53,12 +58,15 @@ function ComboRangeRow({ zone, labelText = zone, zoneStates, zonePercentages, zo
             />
             <Col className="ps-3">
                 <Form.Range
-                    value={sliderValue*slideFactor}
-                    onChange={(e) => { setZoneValue(zone, parseInt(e.target.value)/slideFactor) }}
+                    className='custom-range'
+                    style={{
+                    '--thumb-color': thumbColor,
+                    } as React.CSSProperties}
+                    value={sliderValue * slideFactor}
+                    onChange={(e) => { setZoneValue(zone, parseInt(e.target.value) / slideFactor) }}
                     min={min}
                     max={max}
                     step={step}
-                    disabled={buttonText === 'waiting' || !zoneStates[zone]}
                 />
             </Col>
             <Col xs="1"></Col>

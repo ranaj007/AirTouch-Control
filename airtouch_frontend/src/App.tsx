@@ -6,7 +6,6 @@ import ComboRangeRow from './ComboRangeRow';
 import TempModeButton from './TempModeButton';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import TempRangeRow from './TempRangeRow';
 
 function App() {
   const [data, setData] = useState(['test', 'test2']);
