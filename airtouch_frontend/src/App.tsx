@@ -114,6 +114,10 @@ function App() {
     calcVentTotal();
   }, [zoneStates, zonePercentages]);
 
+  useEffect(() => {
+    console.log(error);
+  }, [error]);
+
   return (
     <Container className="mx-0">
       <h1>AirTouch Controller</h1>

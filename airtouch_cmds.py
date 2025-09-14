@@ -1,5 +1,6 @@
 from pyairtouch import AirTouchModel, connect, AirTouch, api
 from flask import jsonify
+import asyncio
 
 async def airtouch_connect() -> AirTouch:
     airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
@@ -8,6 +9,26 @@ async def airtouch_connect() -> AirTouch:
     print("Failed to connect to AirTouch")
     return None
 
+def start_background_temp_control():
+    asyncio.run(target=background_temp_control())
+
+async def background_temp_control():
+    airtouch = await airtouch_connect()
+    if not airtouch:
+        print("Failed to connect to AirTouch")
+        return
+
+    # Subscribe to AC status updates:
+    for aircon in airtouch.air_conditioners:
+        print(f"AC {aircon.ac_id} is {aircon.power_state}")
+
+        for zone in aircon.zones:
+            #zone.subscribe(_on_zone_status_updated)
+            pass
+
+    # Keep the program running to receive updates
+    while True:
+        await asyncio.sleep(1)
 
 async def get_zones():
     airtouch = await airtouch_connect()
