@@ -1,6 +1,5 @@
 from airtouch_cmds import airtouch_connect
 from VictoriaMetrics import upload_data
-import asyncio
 import time
 
 def send_data(name: str, sender: str, unix_time_ms: int, value, url: str = "http://192.168.1.100:8428/api/v1/import") -> None:
