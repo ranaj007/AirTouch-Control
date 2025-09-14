@@ -3,6 +3,7 @@ import airtouch_monitor
 import multiprocessing
 import airtouch_cmds
 import asyncio
+import time
 import os
 
 app = Flask(__name__, template_folder="airtouch_frontend/dist", static_folder="airtouch_frontend/dist/assets")
@@ -55,7 +56,10 @@ def set_vent():
 
 def start_background_monitor():
     print("Starting Airtouch background monitor...")
-    asyncio.run(airtouch_monitor.main())
+    while True:
+        asyncio.run(airtouch_monitor.main())
+        print("Sleeping for 60 seconds...")
+        time.sleep(60)
 
 if __name__ == "__main__":
     multiprocessing.set_start_method('spawn', True)
