@@ -1,3 +1,4 @@
+import asyncio
 from pyairtouch import AirTouchModel, connect, AirTouch, api
 from flask import jsonify
 import json
@@ -5,10 +6,11 @@ import os
 
 async def airtouch_connect() -> AirTouch:
     airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
-    if await airtouch.init():
-        return airtouch
-    print("Failed to connect to AirTouch")
-    return None
+    while not await airtouch.init():
+        print("Failed to connect to AirTouch")
+        print("Retrying connection in 5 seconds...")
+        await asyncio.sleep(5)
+    return airtouch
 
 
 def load_json_file(file_path):
