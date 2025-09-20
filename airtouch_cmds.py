@@ -1,6 +1,7 @@
 from pyairtouch import AirTouchModel, connect, AirTouch, api
 from flask import jsonify
-import asyncio
+import json
+import os
 
 async def airtouch_connect() -> AirTouch:
     airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
@@ -9,26 +10,41 @@ async def airtouch_connect() -> AirTouch:
     print("Failed to connect to AirTouch")
     return None
 
-def start_background_temp_control():
-    asyncio.run(target=background_temp_control())
 
-async def background_temp_control():
+def load_json_file(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+    return {}
+
+
+async def do_temperature_control():
     airtouch = await airtouch_connect()
-    if not airtouch:
-        print("Failed to connect to AirTouch")
-        return
+    
+    temp_control = load_json_file("temp_control.json")
 
-    # Subscribe to AC status updates:
     for aircon in airtouch.air_conditioners:
-        print(f"AC {aircon.ac_id} is {aircon.power_state}")
-
         for zone in aircon.zones:
-            #zone.subscribe(_on_zone_status_updated)
-            pass
+            if zone.name in temp_control and temp_control[zone.name]:
+                print(f"Temp Control: Checking {zone.name}")
+                if zone.current_temperature > zone.target_temperature:
+                    new_damper = 0
+                    print(f"Temp Control: Temperature reached in {zone.name}, closing damper")
+                elif zone.target_temperature - zone.current_temperature < 0.5:
+                    new_damper = 5
+                elif zone.target_temperature - zone.current_temperature < 1:
+                    new_damper = 10
+                elif zone.target_temperature - zone.current_temperature < 2:
+                    new_damper = 25
+                else:
+                    new_damper = 35
+                
+                if new_damper != zone.current_damper_percentage:
+                    print(f"Temp Control: Setting {zone.name} damper to {new_damper}")
+                    await zone.set_damper_percentage(new_damper)
+                else:
+                    print(f"Temp Control: {zone.name} no adjustment needed")
 
-    # Keep the program running to receive updates
-    while True:
-        await asyncio.sleep(1)
 
 async def get_zones():
     airtouch = await airtouch_connect()
@@ -37,13 +53,15 @@ async def get_zones():
     zone_temps = {}
     zone_temp_modes = {}
 
+    temp_control = load_json_file("temp_control.json")
+
     for aircon in airtouch.air_conditioners:
         for zone in aircon.zones:
             zone_states[zone.name] = zone.power_state.name
             zone_percents[zone.name] = zone.current_damper_percentage
             if zone.has_temp_sensor:
                 zone_temps[zone.name] = zone.current_temperature
-                if zone.control_method.name == "TEMPERATURE":
+                if zone.control_method.name in temp_control and temp_control[zone.name]:
                     zone_temp_modes[zone.name] = zone.target_temperature
                 else:
                     zone_temp_modes[zone.name] = zone.target_temperature * -1
@@ -60,16 +78,27 @@ async def get_zones():
 async def set_zones(zone_states, zone_percents, zone_temp_modes):
     airtouch = await airtouch_connect()
 
+    temp_control_file = "temp_control.json"
+    temp_control = load_json_file(temp_control_file)
+
     for aircon in airtouch.air_conditioners:
 
         for zone in aircon.zones:
             if zone.name in zone_states:
                 await zone.set_power(api.ZonePowerState[zone_states[zone.name]])
 
-            if zone.name in zone_temp_modes and zone_temp_modes[zone.name] >= 16:
-                await zone.set_target_temperature(zone_temp_modes[zone.name])
-            else:
-                await zone.set_damper_percentage(zone_percents[zone.name])
+            if zone.name in zone_temp_modes: 
+                if zone_temp_modes[zone.name] >= 16:
+                    await zone.set_target_temperature(zone_temp_modes[zone.name])
+                    temp_control[zone.name] = True
+                else:
+                    temp_control[zone.name] = False
+
+
+            await zone.set_damper_percentage(zone_percents[zone.name])
+
+    with open(temp_control_file, "w") as f:
+        json.dump(temp_control, f)
 
     return jsonify({"message": "Set zones"}), 200
 

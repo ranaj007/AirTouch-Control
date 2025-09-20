@@ -1,4 +1,4 @@
-from airtouch_cmds import airtouch_connect
+from airtouch_cmds import airtouch_connect, do_temperature_control
 from VictoriaMetrics import upload_data
 import time
 
@@ -20,8 +20,10 @@ def send_data(name: str, sender: str, unix_time_ms: int, value, url: str = "http
 
 async def main() -> None:
     try:
-        airtouch = await airtouch_connect()         
+        await do_temperature_control()
         
+        airtouch = await airtouch_connect()
+
         unix_time_ms = int(time.time() * 1000)
 
         for aircon in airtouch.air_conditioners:
@@ -58,4 +60,7 @@ async def main() -> None:
 
     finally:
         print("Closing connection")
-        await airtouch.shutdown()
+        try:
+            await airtouch.shutdown()
+        except Exception:
+            pass
