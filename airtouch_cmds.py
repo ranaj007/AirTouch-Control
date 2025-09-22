@@ -5,8 +5,13 @@ import json
 import os
 
 async def airtouch_connect() -> AirTouch:
-    airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
-    while not await airtouch.init():
+    connected = False
+    while not connected:
+        airtouch = connect(AirTouchModel.AIRTOUCH_4, "192.168.1.104", 9004)
+        if await airtouch.init():
+            connected = True
+            print("Connected to AirTouch")
+            break
         print("Failed to connect to AirTouch")
         print("Retrying connection in 5 seconds...")
         await asyncio.sleep(5)
